@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"strings"
 )
@@ -14,6 +15,8 @@ func NewDatabase(url, name string) Database {
 }
 
 func (db Database) Write(requests []Request) error {
+	log.Println("writing", len(requests), "points")
+
 	lines := make([]string, len(requests))
 	for i, req := range requests {
 		lines[i] = req.InfluxString()
@@ -26,5 +29,6 @@ func (db Database) Write(requests []Request) error {
 		resp.Body.Close()
 	}
 
+	log.Println("got response:", resp.Status)
 	return err
 }

@@ -11,6 +11,7 @@ import (
 
 var (
 	period int
+	batch  int
 	stream bool
 	dbUrl  string
 	dbName string
@@ -21,6 +22,7 @@ func init() {
 	flag.StringVar(&dbUrl, "h", "", "InfluxDB server url")
 	flag.StringVar(&dbName, "d", "", "InfluxDB database name")
 	flag.BoolVar(&stream, "s", false, "Stream")
+	flag.IntVar(&batch, "b", 1000, "Batch size")
 	flag.Parse()
 
 	if dbUrl == "" {
@@ -44,7 +46,6 @@ func main() {
 		go func() {
 			for {
 				if len(requests) > 0 {
-					log.Println("writing", len(requests), "points")
 					go db.Write(requests)
 					requests = []Request{}
 				}
@@ -64,11 +65,24 @@ func main() {
 		}
 
 		requests = append(requests, req)
-		log.Println(req.InfluxString())
+
+		if stream {
+			log.Println(req.InfluxString())
+		}
 	}
 
 	if !stream && len(requests) > 0 {
-		log.Println("writing", len(requests), "points")
-		db.Write(requests)
+		num := len(requests)
+		pages := num / batch
+		offset := 0
+
+		for i := 0; i < pages; i++ {
+			db.Write(requests[offset : offset+batch])
+			offset += batch
+		}
+
+		if offset < num {
+			db.Write(requests[offset:num])
+		}
 	}
 }
