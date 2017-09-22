@@ -69,7 +69,7 @@ func (r *Request) InfluxString() string {
 func NewRequest(str string) (Request, error) {
 	allmatches := logRegexp.FindAllStringSubmatch(str, -1)
 	if len(allmatches) == 0 {
-		return Request{}, fmt.Errorf("no matches")
+		return Request{}, fmt.Errorf("no matches for line: %s", str)
 	}
 	matches := allmatches[0]
 
